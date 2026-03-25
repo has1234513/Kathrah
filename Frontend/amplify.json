@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/<*>",
+      "target": "/index.html",
+      "status": "200"
+    }
+  ]
+}
