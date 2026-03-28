@@ -14,7 +14,7 @@
         <h1 class="auth-title">Welcome back</h1>
         <p class="auth-subtitle">Enter your email and password to sign in to your account</p>
 
-        <form class="auth-form" @submit.prevent="handleSubmit">
+        <div class="auth-form">
           <div class="form-field">
             <label for="email">Email</label>
             <input
@@ -23,6 +23,7 @@
               type="email"
               placeholder="m@example.com"
               autocomplete="email"
+              :disabled="auth.loading"
               required
             />
           </div>
@@ -39,6 +40,7 @@
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="••••••••"
                 autocomplete="current-password"
+                :disabled="auth.loading"
                 required
               />
               <button type="button" class="toggle-pw" @click="showPassword = !showPassword" aria-label="Toggle password">
@@ -48,17 +50,24 @@
             </div>
           </div>
 
-          <p v-if="error" class="form-error">{{ error }}</p>
+          <p v-if="auth.error" class="form-error">{{ auth.error }}</p>
 
-          <button type="submit" class="btn-submit">Sign in</button>
+          <button
+            class="btn-submit"
+            :disabled="auth.loading"
+            @click="handleSubmit"
+          >
+            <span v-if="auth.loading" class="spinner"></span>
+            <span v-else>Sign in</span>
+          </button>
 
           <div class="divider"><span>Or continue with</span></div>
 
-          <button type="button" class="btn-google" @click="handleGoogle">
+          <a href="http://localhost:4000/api/auth/google" class="btn-google">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
             Sign in with Google
-          </button>
-        </form>
+          </a>
+        </div>
 
         <p class="auth-switch">
           Don't have an account?
@@ -72,22 +81,16 @@
       <div class="auth-brand-panel__inner">
         <div class="brand-logo">
           <svg viewBox="0 0 200 230" fill="none" xmlns="http://www.w3.org/2000/svg" class="hex-svg">
-            <polygon points="100,4 196,54 196,174 100,224 4,174 4,54"
-              stroke="#c9a84c" stroke-width="5" fill="none"/>
-            <polygon points="100,22 178,66 178,162 100,206 22,162 22,66"
-              stroke="#1a5252" stroke-width="3" fill="#0d3d3d"/>
-            <path d="M70 80 Q100 60 130 80 Q145 100 130 125 Q100 145 70 125 Q55 100 70 80Z"
-              stroke="#c9a84c" stroke-width="2.5" fill="none"/>
-            <path d="M85 95 Q100 85 115 95 L118 130 Q100 140 82 130 Z"
-              stroke="#c9a84c" stroke-width="1.5" fill="rgba(201,168,76,0.1)"/>
+            <polygon points="100,4 196,54 196,174 100,224 4,174 4,54" stroke="#c9a84c" stroke-width="5" fill="none"/>
+            <polygon points="100,22 178,66 178,162 100,206 22,162 22,66" stroke="#1a5252" stroke-width="3" fill="#0d3d3d"/>
+            <path d="M70 80 Q100 60 130 80 Q145 100 130 125 Q100 145 70 125 Q55 100 70 80Z" stroke="#c9a84c" stroke-width="2.5" fill="none"/>
+            <path d="M85 95 Q100 85 115 95 L118 130 Q100 140 82 130 Z" stroke="#c9a84c" stroke-width="1.5" fill="rgba(201,168,76,0.1)"/>
             <circle cx="100" cy="115" r="6" fill="#c9a84c" opacity="0.6"/>
           </svg>
         </div>
-
         <h2 class="brand-name">KATHRAH</h2>
         <p class="brand-tagline1">Muslim Intellectual Capital Database &amp; a mentorshub</p>
         <p class="brand-tagline2"><em>Where Knowledge is shared and Leadership is strengthened</em></p>
-
         <div class="brand-diamonds">
           <span class="diamond sm"></span>
           <span class="diamond lg"></span>
@@ -102,24 +105,28 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth.js'
+
+const auth = useAuthStore()
+const router = useRouter()
+const route = useRoute()
 
 const form = reactive({ email: '', password: '' })
 const showPassword = ref(false)
-const error = ref('')
 
-const handleSubmit = () => {
-  error.value = ''
+const handleSubmit = async () => {
   if (!form.email || !form.password) {
-    error.value = 'Please fill in all fields.'
+    auth.error = 'Please fill in all fields.'
     return
   }
-  // TODO: hook up to your auth backend
-  alert(`Signing in as ${form.email}`)
-}
-
-const handleGoogle = () => {
-  // TODO: hook up Google OAuth
-  alert('Google sign-in coming soon.')
+  try {
+    await auth.login({ email: form.email, password: form.password })
+    const redirect = route.query.redirect ?? '/dashboard'
+    router.push(redirect)
+  } catch {
+    // error is already set in the store
+  }
 }
 </script>
 
@@ -221,6 +228,11 @@ const handleGoogle = () => {
   border-color: var(--teal-light);
   box-shadow: 0 0 0 3px rgba(10,46,46,0.08);
 }
+.form-field input:disabled,
+.input-wrap input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .input-wrap {
   position: relative;
@@ -258,12 +270,36 @@ const handleGoogle = () => {
   font-weight: 500;
   padding: 0.7rem;
   border-radius: var(--radius-sm);
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s, opacity 0.2s;
   margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
 }
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
   background: var(--teal-deep);
   transform: translateY(-1px);
+}
+.btn-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .divider {
@@ -295,6 +331,7 @@ const handleGoogle = () => {
   border-radius: var(--radius-sm);
   transition: background 0.2s, border-color 0.2s;
   cursor: pointer;
+  text-decoration: none;
 }
 .btn-google:hover {
   background: var(--off-white);
@@ -330,7 +367,6 @@ const handleGoogle = () => {
   background-size: 24px 24px;
   pointer-events: none;
 }
-
 .auth-brand-panel__inner {
   position: relative;
   z-index: 1;
@@ -341,14 +377,12 @@ const handleGoogle = () => {
   align-items: center;
   gap: 1rem;
 }
-
 .brand-logo { width: 160px; height: 160px; margin-bottom: 0.5rem; }
 .hex-svg {
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 4px 24px rgba(201,168,76,0.25));
 }
-
 .brand-name {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 5vw, 4rem);
@@ -356,28 +390,20 @@ const handleGoogle = () => {
   letter-spacing: 0.18em;
   color: var(--off-white);
 }
-.brand-tagline1 {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.75);
-}
+.brand-tagline1 { font-size: 1rem; color: rgba(255,255,255,0.75); }
 .brand-tagline2 {
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-style: italic;
   color: rgba(255,255,255,0.55);
 }
-
 .brand-diamonds {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   margin-top: 0.5rem;
 }
-.diamond {
-  background: var(--gold);
-  transform: rotate(45deg);
-  display: block;
-}
+.diamond { background: var(--gold); transform: rotate(45deg); display: block; }
 .diamond.sm { width: 10px; height: 10px; opacity: 0.7; }
 .diamond.lg { width: 16px; height: 16px; }
 
