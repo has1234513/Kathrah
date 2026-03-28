@@ -114,37 +114,25 @@ const route = useRoute()
 
 const form = reactive({ email: '', password: '' })
 const showPassword = ref(false)
-const error = ref('')
-const loading = ref(false)
 
 const handleSubmit = async () => {
-  error.value = ''
   if (!form.email || !form.password) {
-    error.value = 'Please fill in all fields.'
+    auth.error = 'Please fill in all fields.'
     return
   }
-  
-  loading.value = true
   try {
-    const res = await fetch('http://localhost:4000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email: form.email, password: form.password }),
-    })
-    // ↓ place it here, replacing the old data/res.ok block
-    const data = await res.json()
-    if (!res.ok) {
+    await auth.login({ email: form.email, password: form.password })
+        if (!res.ok) {
       error.value = data.message ?? 'Invalid credentials.'
       return
     }
+    // Store user so the guard knows we're authenticated
     localStorage.setItem('kathrah_user', JSON.stringify(data.user))
-    router.push('/dashboard')
+    const redirect = route.query.redirect ?? '/dashboard'
+    router.push(redirect)
   } catch (e) {
-    error.value = 'Could not connect to server. Is the backend running?'
-  } finally {
-    loading.value = false
-  }
+      error.value = e.message ?? 'Login failed.'
+    }
 }
 </script>
 
