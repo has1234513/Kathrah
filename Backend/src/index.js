@@ -45,7 +45,7 @@ app.use(cookieParser());
 /** General API limiter: 100 req / 15 min per IP */
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 10000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Please try again later' },
@@ -54,7 +54,7 @@ const apiLimiter = rateLimit({
 /** Strict auth limiter: 10 req / 15 min per IP */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many auth attempts, please wait' },

@@ -112,27 +112,25 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
+const error = ref(null)
+
 const form = reactive({ email: '', password: '' })
 const showPassword = ref(false)
 
 const handleSubmit = async () => {
   if (!form.email || !form.password) {
-    auth.error = 'Please fill in all fields.'
+    error.value = 'Please fill in all fields.'
     return
   }
   try {
     await auth.login({ email: form.email, password: form.password })
-        if (!res.ok) {
-      error.value = data.message ?? 'Invalid credentials.'
-      return
-    }
-    // Store user so the guard knows we're authenticated
-    localStorage.setItem('kathrah_user', JSON.stringify(data.user))
+    localStorage.setItem('kathrah_user', JSON.stringify(auth.user))
     const redirect = route.query.redirect ?? '/dashboard'
+    console.log('Redirecting to:', redirect)
     router.push(redirect)
   } catch (e) {
-      error.value = e.message ?? 'Login failed.'
-    }
+    error.value = e.message ?? 'Login failed.'
+  }
 }
 </script>
 
