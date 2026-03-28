@@ -172,15 +172,16 @@ const handleSubmit = async () => {
   }
 
   try {
-    await auth.register({
-      email: form.email,
-      password: form.password,
-      name: form.name || undefined,
-    })
-    router.push('/dashboard')
-  } catch {
-    // error already set in store
-  }
+      await auth.register({
+        email: form.email,
+        password: form.password,
+        name: form.name || undefined,
+      })
+      localStorage.setItem('kathrah_user', JSON.stringify(auth.user))
+      router.push('/dashboard')
+    } catch (e) {
+      error.value = e.message ?? 'Registration failed.'
+    }
 }
 </script>
 
