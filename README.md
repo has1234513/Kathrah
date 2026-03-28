@@ -102,3 +102,27 @@ project/
         ├── views/                 # Login, Register, Dashboard, NotFound
         └── components/icons/      # Google, GitHub SVG icons
 ```
+
+
+## Production
+
+# SSH back in
+ssh -i kathrah-key.pem ec2-user@<EC2_PUBLIC_IP>
+
+# View API logs
+pm2 logs kathrah-api
+
+# Restart after code changes
+cd ~/kathrah/Backend
+git pull
+npm install
+npx prisma migrate deploy
+pm2 restart kathrah-api
+
+# Check Nginx logs
+sudo tail -f /var/log/nginx/error.log
+
+# RDS — check instance status
+aws rds describe-db-instances \
+  --db-instance-identifier kathrah-postgres \
+  --query 'DBInstances[0].DBInstanceStatus'
